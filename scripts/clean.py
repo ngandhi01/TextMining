@@ -104,7 +104,7 @@ def standard_parse(tweets, set_name):
 
 def main():
 
-    # get params
+    # get params for scraping
     parser = argparse.ArgumentParser(description = "File for cleaning tweets and storing in AWS.")
     #parser.add_argument("aws_credentials", help = "Text file with AWS credentials (AWS access, AWS secret)")
     parser.add_argument("import_tweets_name", help = "Name of .json file (without .json extension) of raw tweets, to import from AWS", 
