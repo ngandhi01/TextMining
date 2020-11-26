@@ -1,0 +1,5 @@
+# ignore any data
+
+data/*
+
+*DS_Store
