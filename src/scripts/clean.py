@@ -124,6 +124,7 @@ def main():
     try:
         print("Starting tweet parsing and cleaning....")
         df = standard_parse(tweets, args.export_tweets_name)
+        df.drop_duplicates(subset= "tweet_id", inplace=True)
         df.to_csv(export_file_name, index = False, encoding = 'utf-8-sig')
         print("Finished parsing and cleaning tweets")
     except Exception as e:
