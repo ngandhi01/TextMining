@@ -162,9 +162,6 @@ def main():
    # get params
    parser = argparse.ArgumentParser(description = "File for streaming tweets and storing in AWS.")
    parser.add_argument("twitter_credentials", help = "Text file with Twitter developer credentials (consumer key, consumer secret, access key, access secret)")
-   #parser.add_argument("aws_credentials", help = "Text file with AWS credentials (AWS access, AWS secret)")
-   #parser.add_argument("export_tweets_name", help = "Name to give to .json file exported after Twitter streaming", 
-   #   default = "outrage_tweets_streamed_{}".format(datetime.datetime.today().strftime ('%d-%b-%Y'))) # named by current date, by default
    parser.add_argument("max_tweet_count", help = "Maximum number of tweets to scrape", default = 250000, type = int)
    parser.add_argument("search_terms", help = "Search terms to use for Twitter streaming query.", nargs = "+") # unspecified # of possible keywords
    args = parser.parse_args()
