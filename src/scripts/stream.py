@@ -160,7 +160,7 @@ def stream_tweets(search_terms, auth, max_tweets):
 def main():
 
    # get params
-   parser = argparse.ArgumentParser(description = "File for streaming tweets and storing in AWS.")
+   parser = argparse.ArgumentParser(description = "File for streaming tweets.")
    parser.add_argument("twitter_credentials", help = "Text file with Twitter developer credentials (consumer key, consumer secret, access key, access secret)")
    parser.add_argument("max_tweet_count", help = "Maximum number of tweets to scrape", default = 250000, type = int)
    parser.add_argument("search_terms", help = "Search terms to use for Twitter streaming query.", nargs = "+") # unspecified # of possible keywords
