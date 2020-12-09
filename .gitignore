@@ -6,3 +6,5 @@ data/*
 
 # ignore creds
 *twitter_creds.txt
+
+media/*
