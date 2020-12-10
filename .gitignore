@@ -1,0 +1,10 @@
+# ignore any data
+
+data/*
+
+*DS_Store
+
+# ignore creds
+*twitter_creds.txt
+
+media/*
