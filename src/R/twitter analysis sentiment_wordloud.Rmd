@@ -1,0 +1,252 @@
+---
+title: "Exploratory Visuals FES 603"
+author: "Neehaar Gandhi"
+date: "2/22/2020"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+Small introduction to project:
+I am analyzing climate change twitter data. Below, I analyze a day's worth of tweets, hoping to unravel different patterns in how people communicate about this global issue (whether these tweets are particularly long-winded, widely circulated via retweets, etc), and also how those tweets communicate sentiments. I also identify different recurring words in these tweets, and try to discern their significance in the global picture on climate change. Ultimately, I hope to understand whether there are general feelings about climate change that can be captured by twitter data, and I would like to understand how those feelings have changed over time, and where we can expect them to go. Are people overwhelmingly negative? positive? etc.
+
+```{r}
+library(NLP)
+library(twitteR)
+library(rtweet)
+library(syuzhet)
+library(tm)
+library(SnowballC)
+library(stringi)
+library(topicmodels)
+library(wordcloud)
+library(ggplot2)
+library(SentimentAnalysis)
+library(tweetbotornot)
+library(leaflet)
+library(maps)
+library(reshape2)
+library(dplyr)
+library(ggplot2)
+
+#using 100,000 randomly sampled tweets from the YPCCC database
+climate1 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc1.csv")
+climate2 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc2.csv")
+climate3 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc3.csv")
+climate4 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc4.csv")
+climate5 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc5.csv")
+climate6 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc6.csv")
+climate7 <- read.csv("/Users/NeehaarGandhi/Desktop/user_loc7.csv")
+
+combined1 <- do.call("rbind", list(climate1,climate2,climate3,climate4,climate5,climate6,climate7))
+combined1 <- sample_n(combined1, 100000)
+
+#scraping coronavirus tweets
+consumer_key <- "N7J5VielH78yMrFzPvT1vTHHG" 
+consumer_secret <- "rWJSVlBfQzRjcdVCxydJWCfUxRpQXcgFAKyVm46guBVmlsEApc" 
+access_token <- "1056271129063636992-sQQ9troAclUuEVXq82uEOjtxAjnh2n"
+access_secret <- "4MaqasKE2On1AxdKdXrN5BSpHLE8sZfQMPIej8VBEI2cF"
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+
+covid1 <- searchTwitter("#covid", n=10000,lang="en", since="2020-04-08")
+covid2 <- searchTwitter("#covid", n=10000,lang="en", until="2020-04-07", since="2020-04-06")
+covid3 <- searchTwitter("#covid", n=10000,lang="en", until="2020-04-06", since="2020-04-05")
+covid4 <- searchTwitter("#covid", n=10000,lang="en", until="2020-04-05", since="2020-04-04")
+covid5 <- searchTwitter("#covid", n=10000,lang="en", until="2020-04-04", since="2020-04-03")
+
+corona1 <- searchTwitter("#coronavirus", n=10000,lang="en", since="2020-04-08")
+corona2 <- searchTwitter("#coronavirus", n=10000,lang="en", until="2020-04-07", since="2020-04-06")
+corona3 <- searchTwitter("#coronavirus", n=10000,lang="en", until="2020-04-06", since="2020-04-05")
+corona4 <- searchTwitter("#coronavirus", n=10000,lang="en", until="2020-04-05", since="2020-04-04")
+corona5 <- searchTwitter("#coronavirus", n=10000,lang="en", until="2020-04-04", since="2020-04-03")
+
+cvdf1 <- twListToDF(covid1)
+cvdf2 <- twListToDF(covid2)
+cvdf3 <- twListToDF(covid3)
+cvdf4 <- twListToDF(covid4)
+cvdf5 <- twListToDF(covid5)
+covdf1 <- twListToDF(corona1)
+covdf2 <- twListToDF(corona2)
+covdf3 <- twListToDF(corona3)
+covdf4 <- twListToDF(corona4)
+covdf5 <- twListToDF(corona5)
+
+#100000 coronavirus tweets
+coronatweets <- do.call("rbind", list(cvdf1,cvdf2,cvdf3,cvdf4,cvdf5,covdf1,covdf2,covdf3,covdf4,covdf1))
+coronatweets <- sample_n(coronatweets, 100000)
+
+
+#This is an interesting tool to check whether or not particular accounts 
+# bots <- tweetbotornot(tweets$screen_name, fast=T)
+# botcheck <- merge(tweets, bots, by="screen_name", all=T)
+# botcheck
+# nrow(botcheck)
+# (botcheck[!botcheck$prob_bot > 0.75,])
+```
+
+#Basic Histograms on Character Count
+```{r}
+hist(tweets$display_text_width, main="Length of Tweets Mentioning Climate Change", xlab="Character Count", ylab="Number of Tweets")
+```
+
+*The above figure shows the character length of tweets mentioning climate change on February 21st, 2020.* 
+
+The purpose of including this was to explore whether climate change tweets tend to be longer/shorter than the typical 140 character tweet. We found that this is indeed not the case, and climate change tweets overwhelmingly tend to push up to the 140 character limit, but infrequently exceed it. I think this is grounds for further exploratory analysis- I would be interested to see if this is trending in a particular direction. As more milennials talk about climate change on twitter, are they beginning to utilize the new longer tweet format for their discussions? I think it would be interesting to compare how the mean character length has changed over time. This would be possible grounds for MANOVA. Further, I was looking for outliers with this, but didn't find any particularly crazy cases (but I did for retweets, shown below!)
+
+#Basic Boxplots on Retweet Counts
+```{r}
+boxplot(tweets$retweet_count, main="Boxplot on Number of Retweets for Tweets Mentioning Climate Change", ylab="Number of Retweets") 
+tweets[tweets$retweet_count > 150000,]
+```
+
+*The above figure depicts a boxplot on the retweets for tweets mentioning climate change on February 21st, 2020.*
+
+The purpose for creating the above graphic was purely for exploratory purposes. I wanted to see if tweets about climate change gained a lot of traction and thus had a lot of retweets. This would be depicted by a high median in the boxplot, but as we see, the median is 0. This implies that many tweets on climate change are not widely circulated (which makes sense given 100,000 tweets). However, that's what makes the outliers special; they are the exceptional tweets that garner a lot of support and become widely circulated (not everything can go viral, else things wouldn't be as memorable). I think it would be interesting to do the same type of visualization with favorites, but ultimately I wouldn't use this in a infographic or a presentation, because it is really hard to read. This is mostly just for my personal benefit and for statistical analysis, not presentation. Future steps would be to analyze the exact sentiments found in the outliers; are the tweets that are widely circulated overwhelmingly conveying a particular sentiment? I would like to explore this. 
+
+#WordCloud
+```{r}
+#text cleaning and word cloud creation 
+
+#first climate change tweets 
+
+#convert to lowercase
+text <- tolower(combined1$text)
+
+#replace "rt" with blank space
+text <- gsub("rt", "", text)
+
+#replace @UserName is blank space
+text <- gsub("@\\w+", "", text)
+
+#remove punctuation
+text <- gsub("[[:punct:]]", "", text)
+
+#remove links
+text <- gsub("http\\w+", "", text)
+
+#remove tabs
+text <- gsub("[ |\t]{2,}", "", text)
+
+#remove blank spaces at the beginning
+text <- gsub("^ ", "", text)
+
+#remove blank spaces at the end
+text <- gsub(" $", "", text)
+
+#remove stop words
+text <- removeWords(text, stopwords("en"))
+
+#wordcloud for climate change tweets
+wordcloud(text, min.freq = 100, colors=brewer.pal(8, "Dark2"),random.color=T, max.words=500)
+
+
+#cleaning and wordcloud for coronavirus tweets
+coronatext <- tolower(coronatweets$text)
+coronatext <- gsub("rt", "", coronatext)
+coronatext <- gsub("@\\w+", "", coronatext)
+coronatext <- gsub("[[:punct:]]", "", coronatext)
+coronatext <- gsub("http\\w+", "", coronatext)
+coronatext <- gsub("[ |\t]{2,}", "", coronatext)
+coronatext <- gsub("^ ", "", coronatext)
+coronatext <- gsub(" $", "", coronatext)
+coronatext <- removeWords(coronatext, stopwords("en"))
+
+wordcloud(coronatext, min.freq = 100, colors=brewer.pal(8, "Dark2"),random.color=T, max.words=500)
+
+```
+
+
+#Basic Sentiment Analysis Corona
+```{r}
+mysentiments <- get_nrc_sentiment(coronatext)
+sentimentscores <- data.frame(colSums(mysentiments[,]))
+names(sentimentscores) <- "Score"
+sentimentscores <- cbind("sentiment"=rownames(sentimentscores),sentimentscores)
+rownames(sentimentscores) <- NULL
+
+ggplot(data=sentimentscores, aes(x=reorder(sentiment, Score), y=Score)) + geom_bar(aes(fill=sentiment),stat="identity") + theme(legend.position="none") + xlab("Sentiments") + ylab("Scores") + ggtitle("Sentiments of People Behind the Tweets on Coronavirus")
+
+#breakdown into just positive/negative categories by summing the individual scores
+sentiment <- c("positive", "negative")
+Score <- c(84795+59785+21296+22946,29657+39174+19723+48520+34673+70025)
+posnegcorona <- data.frame(sentiment, Score)
+ggplot(data=posnegcorona, aes(x=reorder(sentiment, Score), y=Score)) + geom_bar(aes(fill=sentiment),stat="identity") + theme(legend.position="none") + xlab("Sentiments") + ylab("Scores") + ggtitle("Sentiments of People Behind the Tweets on Coronavirus")
+
+
+#pie chart
+library(dplyr)
+library(ggplot2)
+sentiment <- c("positive", "negative")
+Score <- c(84795+59785+21296+22946,29657+39174+19723+48520+34673+70025)
+prop <- c(round((188822/430594)*100,2),round((241772/430594)*100,2))
+posnegcorona10 <- data.frame(sentiment, Score, prop)
+posnegcorona10 <- posnegcorona10 %>%
+  arrange(desc(Score)) %>%
+  mutate(lab.ypos=cumsum(prop) - 0.5*prop)
+posnegcorona10
+
+ggplot(data=posnegcorona10, aes(x="", y=Score)) + geom_bar(aes(fill=sentiment),stat="identity") + coord_polar("y", start=0) + theme_void() + ggtitle("Positive and Negative Sentiments Behind Coronavirus Tweets") + geom_text(aes(y=lab.ypos, label=prop))
+```
+
+#Sentiment Analysis Climate Change
+```{r}
+mysentiments1 <- get_nrc_sentiment(text)
+sentimentscores1 <- data.frame(colSums(mysentiments1[,]))
+sentimentscores1
+names(sentimentscores1) <- "Score"
+sentimentscores1 <- cbind("sentiment"=rownames(sentimentscores1),sentimentscores1)
+rownames(sentimentscores1) <- NULL
+
+ggplot(data=sentimentscores1, aes(x=reorder(sentiment, Score), y=Score)) + geom_bar(aes(fill=sentiment),stat="identity") + theme(legend.position="none") + xlab("Sentiments") + ylab("Scores") + ggtitle("Sentiments of People Behind the Tweets on Climate Change")
+
+sentiment1 <- c("positive", "negative")
+Score1 <- c(179121+94354+38851+56405,148343+43449+191523+34967+79768+68426)
+posnegclimate <- data.frame(sentiment1, Score1)
+ggplot(data=posnegclimate, aes(x=reorder(sentiment1, Score1), y=Score1)) + geom_bar(aes(fill=sentiment),stat="identity") + theme(legend.position="none") + xlab("Sentiments") + ylab("Scores") + ggtitle("Sentiments of People Behind the Tweets on Climate Change")
+
+ggplot(data=posnegclimate, aes(x="", y=Score)) + geom_bar(aes(fill=sentiment1),stat="identity") + coord_polar("y", start=0) + theme_void() + ggtitle("Positive and Negative Sentiments Behind Climate Change Tweets") 
+
+```
+
+*The above figure shows general sentiments derived from tweets regarding climate change*
+
+
+#Topic Modeling on Corpus (purely exploratory. requires greater computing power)
+```{r}
+# #first need to build a corpus 
+# corpustweets <- Corpus(VectorSource(text))
+# corpustweets <- tm_map(corpustweets, stemDocument)
+# 
+# doc.lengths <- rowSums(as.matrix(DocumentTermMatrix(corpustweets)))
+# dtm <- DocumentTermMatrix(corpustweets[doc.lengths > 0])
+# 
+# set.seed(123)
+# k <- 10
+# 
+# models <- list(
+#   CTM = CTM(dtm, k = k, control = list(seed = SEED, var = list(tol = 10^-4), em = list(tol = 10^-3))),
+#   VEM = LDA(dtm, k = k, control = list(seed = SEED)),
+#   VEM_Fixed = LDA(dtm, k = k, control = list(estimate.alpha = FALSE, seed = SEED)),
+#   Gibbs = LDA(dtm, k = k, method = "Gibbs", control = list(seed = SEED, burnin = 1000, thin = 100,    iter = 1000))
+# )
+# 
+# lapply(models, terms, 10)
+
+```
+
+#Maps (purely exploratory)
+```{r}
+tweets <- searchTwitter("#climatechange OR #globalwarming", n=18000, lang="en")
+tweets.df <- twListToDF(tweets)
+
+tweets.map <- transform(tweets.df, latitude=as.numeric(latitude), longitude=as.numeric(longitude))
+tweets.map <- tweets.map[-which(is.na(tweets.map$longitude)),]
+m <- leaflet(tweets.map) %>% addTiles()
+m %>% addCircles(lng= ~longitude, lat= ~latitude, popup = m$type, weight=8, radius = 40, color='#fb3004', stroke=T, fillOpacity=0.8)
+```

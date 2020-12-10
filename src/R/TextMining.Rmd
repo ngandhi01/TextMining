@@ -1,0 +1,112 @@
+---
+title: "TextMining"
+author: "Neehaar Gandhi"
+date: "10/20/2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+# Setup
+library(NLP)
+library(twitteR)
+library(rtweet)
+library(syuzhet)
+library(tm)
+library(SnowballC)
+library(stringi)
+library(topicmodels)
+library(wordcloud)
+library(ggplot2)
+library(SentimentAnalysis)
+library(tweetbotornot)
+library(leaflet)
+library(maps)
+library(reshape2)
+library(dplyr)
+library(ggplot2)
+
+# Enter API keys 
+consumer_key <- "2DwW3Gi2M4C01AG0TvjMi47ep" 
+consumer_secret <- "3YdEl0IKOgazCiAHcUqCyQE20bJ0azaoY7Mk62axtoEtv4fqg7" 
+access_token <- "237491784-lJG3mSi7N4VIUBCieNVswHm5o7wliqVx3lYyYQqz"
+access_secret <- "i33M5rwbX8TkEonNORelUfpqmnMerAkBfYg3EjIrljBxC"
+
+setup_twitter_oauth(consumer_key, consumer_secret, access_token, access_secret)
+```
+
+```{r}
+# Scraping based on determined keywords/topics
+# Note that if we pull from January then we are working against our set pull limit. Do not run this unless absolutely necessary- I will be saving this information into a CSV for easy access 
+# Topics we are interested in:
+
+# #covid19
+# covid19 <- searchTwitter("#covid19", n=10000,lang="en", since="2020-01-01")
+# 
+# #coronavirus
+# coronavirus <- searchTwitter("#coronavirus", n=10000,lang="en", since="2020-01-01")
+# 
+# #lockdown
+# lockdown <- searchTwitter("#lockdown", n=10000,lang="en", since="2020-01-01")
+# 
+# #restriction
+# restriction <- searchTwitter("#restriction", n=10000,lang="en", since="2020-01-01")
+# 
+# #shutdown
+# shutdown <- searchTwitter("#shutdown", n=10000,lang="en", since="2020-01-01")
+# 
+# #covid
+# covid <- searchTwitter("#covid", n=10000,lang="en", since="2020-01-01")
+# 
+# #stayhome
+# stayhome <- searchTwitter("#stayhome", n=10000,lang="en", since="2020-01-01")
+```
+
+```{r}
+# Please note that this is a trial chunk; if this data is of a form that we like then we will run the above chunk and pull data from January 2020
+# Scraping based on determined keywords/topics
+# Topics we are interested in:
+
+#covid19
+covid19 <- searchTwitter("#covid19", n=1000,lang="en", since="2020-10-15")
+
+#coronavirus
+coronavirus <- searchTwitter("#coronavirus", n=1000,lang="en", since="2020-10-15")
+
+#lockdown
+lockdown <- searchTwitter("#lockdown", n=1000,lang="en", since="2020-10-15")
+
+#restriction
+restriction <- searchTwitter("#restriction", n=1000,lang="en", since="2020-10-15")
+
+#shutdown
+shutdown <- searchTwitter("#shutdown", n=1000,lang="en", since="2020-10-15")
+
+#covid
+covid <- searchTwitter("#covid", n=1000,lang="en", since="2020-10-15")
+
+#stayhome
+stayhome <- searchTwitter("#stayhome", n=10000,lang="en", since="2020-01-01")
+```
+
+```{r}
+# Convert these tweets into df format
+covid19df <- twListToDF(covid19)
+coronavirusdf <- twListToDF(coronavirus)
+lockdowndf <- twListToDF(lockdown)
+restrictiondf <- twListToDF(restriction)
+shutdowndf <- twListToDF(shutdown)
+coviddf <- twListToDF(covid)
+stayhomedf <- twListToDF(stayhome)
+```
+
+```{r}
+# Compile into a large df
+coronatweets <- do.call("rbind", list(covid19df,coronavirusdf,lockdowndf,restrictiondf,shutdowndf,coviddf,stayhomedf))
+
+# Write into CSV
+write.csv(coronatweets, "Scraped_Tweets_Trial.csv")
+```
