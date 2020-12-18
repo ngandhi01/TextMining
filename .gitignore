@@ -8,3 +8,5 @@ data/*
 *twitter_creds.txt
 
 media/*
+
+twarc.log
